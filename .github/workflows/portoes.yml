@@ -1,0 +1,117 @@
+# =====================================================================
+# portoes.yml — OnyxMiniNode
+# --------------------------------------------------------------------
+# Três portões, e a escolha de os pôr neste único ficheiro é
+# deliberada: são os três que não precisam de hardware.
+#
+# Os testes que precisam de placa estão em `testes.md` §Alvo e não
+# correm aqui. A razão não é falta de tempo no CI — é que um runner
+# do GitHub não tem uma placa USB86 ligada, e fingir que um workflow
+# os corre seria pior do que não os correr: alguém lê o workflow,
+# vê «pio test» e conclui que a placa foi verificada.
+#
+# Para além disso: `actions/checkout` tem de ser uma tag fixada por
+# SHA. Quem move a tag ganha código executado no runner com as
+# permissões do workflow, e o `git diff` continua vazio.
+#
+# Para actualizar: `git ls-remote https://github.com/actions/checkout <tag>`
+# e trocar o SHA, deixando o tag novo no comentário.
+# =====================================================================
+name: portões
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Duas execuções do mesmo commit em simultâneo desperdiçam runner e
+# dão resultados contraditórios. Cancelar a anterior é o que resolve.
+concurrency:
+  group: portões-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  host:
+    name: núcleo em host
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: obter o código
+        # v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      # O PlatformIO instala-se com o seu próprio instalador e não
+      # pelo pip. Isto é o que a documentação oficial manda fazer, e
+      # a alternativa — `pip install platformio` — põe no runner uma
+      # versão que ninguém escolheu.
+      - name: PlatformIO
+        run: |
+          python3 -m pip install --user platformio
+          ~/.local/bin/pio --version
+
+      - name: o mapa corresponde à árvore
+        run: python3 scripts/verificar_estrutura.py
+
+      - name: testes do núcleo, em host
+        run: ~/.local/bin/pio test -e native
+
+      - name: nada por versionar
+        # Um ficheiro no disco que não está no índice não vai num
+        # `clone` da outra pessoa. Descobri-lo aqui, e não no `clone`,
+        # é a diferença entre um portão e um relato tardio.
+        run: |
+          visiveis="$(git ls-files --others --exclude-standard | wc -l)"
+          printf 'ficheiros visíveis fora do índice: %s\n' "$visiveis"
+          if [ "$visiveis" -gt 0 ]; then
+            git ls-files --others --exclude-standard | head -30
+            echo '::error::Estes ficheiros existem na árvore e não estão no índice.'
+            exit 1
+          fi
+
+      - name: sintaxe dos scripts
+        run: python3 -m py_compile scripts/verificar_estrutura.py
+
+  firmware:
+    name: o firmware compila
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: obter o código
+        # v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: PlatformIO
+        run: |
+          python3 -m pip install --user platformio
+          ~/.local/bin/pio --version
+
+      # Compilar sem placa é o que prova que o firmware é fonte, e não
+      # consequência do estado de uma placa que alguém tem aqui.
+      #
+      # `--without-uploading` não é redundante: sem ele, o PlatformIO
+      # tenta detectar a porta e, não a encontrando, falha o passo com
+      # uma mensagem que fala de serial e não de compilação. Um erro
+      # que aponta para a causa errada é um erro que se perde.
+      - name: compilar
+        run: ~/.local/bin/pio run --without-uploading
+
+      # O `.pio/` é é grande. Sem esta verificação, um build
+      # acidental deixado por engano num commit posterior só apareceria
+      # tarde — no `clone` de outra pessoa, onde o Git já não avisa.
+      - name: o `.pio/` não foi versionado
+        run: |
+          if git ls-files --error-unmatch .pio >/dev/null 2>&1; then
+            echo '::error::`.pio/` está versionado. Está no `.gitignore`?'
+            exit 1
+          fi
+          printf 'tamanho de `.pio/`: %s\n' "$(du -sh .pio | cut -f1)"

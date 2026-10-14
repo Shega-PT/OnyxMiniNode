@@ -1,0 +1,121 @@
+onyxmininode/ — estrutura do projecto
+=====================================================================
+Reconciliado com a árvore em 2026-10-14 (B1).
+
+Este ficheiro é um **mapa, não uma fonte de verdade**. A fonte de
+verdade é a árvore de ficheiros, e `scripts/verificar_estrutura.py`
+confere que os dois concordam — porque um mapa desatualizado é pior
+do que não ter mapa: dá para responder com confiança a uma pergunta
+cuja resposta já não é verdade.
+
+A lição não é teórica, e vem do repositório-mãe. O `Estrutura.txt` do
+OnyxChat chegou a listar sete ficheiros que **nunca existiram**,
+incluindo uma implementação de referência em Python que já tinha sido
+substituída. Ninguém reparou, porque ler um mapa parece a mesma coisa
+que verificá-lo.
+
+**Porque é que este repositório tem a sua própria estrutura.** Porque
+é um repositório com a sua própria licença, o seu próprio ciclo de
+vida, e a sua própria lista de coisas que produz. Um mapa que vive no
+repositório-mãe descreve uma árvore que não é sua, e apodrece ao ritmo
+daquela.
+
+
+# Raiz
+---------------------------------------------------------------------
+├─ LICENSE                  # MIT. A diferença em relação ao PolyForm
+│                           # de OnyxChat está em README.md
+│                           # §Porque é que este repositório tem uma
+│                           # licença diferente, e é uma frase só
+├─ README.md                # Ponto de entrada: o que faz, o que não
+│                           # faz, hardware, compilação, testes
+├─ platformio.ini           # Placa, framework e limites do nó. As
+│                           # justificações de cada escolha estão no
+│                           # próprio ficheiro — é um ficheiro de
+│                           # configuração com prosa, e de propósito
+├─ Estrutura.txt            # Este ficheiro: o índice, conferido por
+│                           # `scripts/verificar_estrutura.py`
+├─ .gitignore               # O que **não** é versionado; ver §Gerado
+├─ include/                 # Cabeçalhos do núcleo do relay
+├─ src/                     # Firmware C++
+├─ test/                    # Testes de host e de alvo
+├─ scripts/                 # Portões de entrega
+└─ .github/
+    └─ workflows/           # CI
+
+
+# docs/ — 3 documentos
+---------------------------------------------------------------------
+├─ index.md                 # Índice; é o porta de entrada desta pasta
+├─ protocolo.md             # O que o firmware faz no fio: enquadramento,
+│                           # mensagens, limites e a aritmética da memória
+├─ ameacas.md               # O que a placa física e a licença MIT
+│                           # acrescentam ao modelo de ameaças
+└─ testes.md                # As três camadas de teste, e o que cada uma
+                            # prova — e o que nenhuma prova
+
+
+# include/onyx/ — cabeçalhos
+---------------------------------------------------------------------
+├─ limites.h                # Os quatro números do protocolo, vindos de
+│                           # `platformio.ini`, e os que deles dependem
+├─ mailbox.h                # SHA-256("ONYX/RELAY/v1" ‖ publica)
+├─ frame.h                  # Enquadramento e validação de tamanho
+├─ caixa.h                  # Mailboxes, pendências e prazo de validade
+├─ limites_taxa.h           # Janela deslizante de ENVIAR por ligação
+├─ sessao.h                 # SUBSCREVER / ENVIAR / FECHO, OK / CAIXA / ERRO
+└─ rede.h                   # Ponto de acesso, estação, e o socket TCP
+
+
+# src/ — firmware
+---------------------------------------------------------------------
+├─ main.cpp                 # Arranque, softAP, tarefa do relay, watchdog
+├─ mailbox.cpp              # SHA-256 com o acelerador de hardware
+├─ frame.cpp                # Leitura e escrita do enquadramento
+├─ caixa.cpp                # A tabela de caixas e a expurgo do que expirou
+├─ limites_taxa.cpp         # A janela deslizante
+├─ sessao.cpp               # A máquina de estados de uma ligação
+└─ rede.cpp                 # lwIP: escutar, aceitar, seleccionar
+
+
+# test/
+---------------------------------------------------------------------
+├─ test_frame.cpp           # Enquadramento: comprimentos, limites, recusas
+├─ test_caixa.cpp           # Retenção, entrega única, caixa cheia
+├─ test_sessao.cpp          # As seis mensagens e os seis códigos de erro
+├─ test_mailbox.cpp         # Derivação e a igualdade com o OnyxChat
+└─ test_limites_taxa.cpp    # A janela e o seu reinício
+
+
+# scripts/
+---------------------------------------------------------------------
+└─ verificar_estrutura.py   # Confere que este mapa bate com a árvore
+
+
+# Gerado, e portanto fora da estrutura
+---------------------------------------------------------------------
+| Directório / ficheiro | Quem o produz                |
+| --------------------- | ---------------------------- |
+| `.pio/`               | `pio run`, `pio test`        |
+| `*.elf`, `*.bin`, `*.map` | `pio run`                |
+| `.vscode/`            | PlatformIO IDE               |
+| `platformio-local.ini`| a pessoa, de propósito       |
+
+O `.pio/` é o equivalente ao `target/` do Rust e ao `node_modules/`
+da interface do OnyxChat: é uma consequência da ferramenta, não uma
+decisão do projecto. `scripts/verificar_estrutura.py` ignora-o
+explicitamente, e não por ser `.gitignore` que está ao corrente — este
+programa lê o disco, e ignorado não é o mesmo que ausente.
+
+
+# O que este mapa ainda não diz
+---------------------------------------------------------------------
+A secção existe para que a sua existência seja uma coisa registada e
+não um buraco. Hoje: um mapa com 45 asserções e uma secção de
+histórico que cabe num ecrã.
+
+Quando `src/` passar a ter subpastas — o que acontece no dia em que o
+firmware ultrapassar um punhado de ficheiros — esta secção é o sítio
+onde isso fica escrito, com o que a divisão resolve e o que a divisão
+custa. Um mapa que não registe as suas próprias mudanças é um mapa que
+está a envelhecer em silêncio.

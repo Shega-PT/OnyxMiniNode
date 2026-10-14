@@ -1,0 +1,69 @@
+# =====================================================================
+# .gitignore — OnyxMiniNode
+# ---------------------------------------------------------------------
+# Organizado pela **origem** de cada ficheiro, não pelo tipo. Um
+# `.gitignore` escrito como lista solta de extensão acaba sempre por
+# faltar o ficheiro que estraga o repositório, porque ninguém sabe em
+# que secção o procurar — e aqui a consequência não é um ficheiro a
+# mais: é o firmware compilado inteiro, vários megabytes de binário
+# que não pertencem ao Git.
+#
+# A regra que guia tudo: **o que o PlatformIO gera nunca é versionado,
+# o que é deliberadamente versionado tem de aparecer numa excepção
+# comentada no fundo.**
+#
+# Repare-se na diferença de política em relação ao repositório-mãe:
+# o OnyxChat é PolyForm Noncommercial, e este é MIT. A razão está em
+# `README.md` §Porque é que este repositório tem uma licença diferente
+# — e em apenas uma frase: um relay não tem segredos para proteger.
+# =====================================================================
+
+
+# ---------------------------------------------------------------------
+# PlatformIO — o build
+# ---------------------------------------------------------------------
+# `.pio/` é o directório de saída do PlatformIO: objectos, mapas de
+# ligação, ficheiros de configuração gerados e a cache do SCons. O seu
+# conteúdo muda a cada compilação e depende do caminho onde o
+# repositório foi clonado, o que o torna impossível de reproduzir.
+#
+# Este é o motivo pelo qual a regra existe num `.gitignore` de um
+# repositório de firmware: é o equivalente ao `target/` do Rust, e a
+# mesma armadilha — compilar uma vez e sujar o clone inteiro.
+.pio/
+
+# Binários e mapas que o `pio run` deixa na raiz. Duplicam a regra
+# acima para quem use `--build-dir` ou um perfil que escape ao `.pio/`.
+*.elf
+*.bin
+*.map
+*.hex
+
+# ---------------------------------------------------------------------
+# Configuração local
+# ---------------------------------------------------------------------
+# `platformio.ini` é versionado — sem ele ninguém consegue construir
+# nada. Mas o PlatformIO também aceita um `platformio-local.ini` que
+# fica por cima e **não** se versiona, para apontar a porta de
+# uploading, escolher outra placa, ou pôr uma chave de API. Quem o
+# escreve num ficheiro versionado está a publicar a sua configuração
+# de máquina sem dar por isso.
+platformio-local.ini
+
+# ---------------------------------------------------------------------
+# Editor e Sistema
+# ---------------------------------------------------------------------
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*~
+
+# ---------------------------------------------------------------------
+# O que fica deliberadamente por versionar
+# ---------------------------------------------------------------------
+# Nada, hoje. A secção existe para que a sua ausência seja uma
+# decisão registada e não um esquecimento: quando entrar aqui um
+# ficheiro, o porquê de o Git o precisar tem de ficar escrito ao lado
+# dele. `Estrutura.txt` §Gerado lista o inverso — o que é produzido e
+# por quem — e a simetria entre as duas secções é deliberada.
