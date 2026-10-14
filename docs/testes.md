@@ -7,8 +7,25 @@ coisas ao mesmo tempo.
 | Camada | Onde corre | Precisa de placa | O que prova |
 | --- | --- | --- | --- |
 | Host | `pio test -e native` | não | o protocolo e a lógica de retenção |
-| Alvo | `pio test -t devkitv1` | **sim** | que a memoria cabe e o tempo chega |
-| Interoperabilidade | manual / CI com placa | **sim** | que o OnyxChat real fala com este firmware |
+| Alvo | `pio test -t devkitv1` | **sim** | que a memória cabe e o tempo chega |
+| Interoperabilidade | manual | **sim** | que o OnyxChat real fala com este firmware |
+
+Estado actual: **cinquenta e cinco casos de host, todos a passar**, e
+o firmware a compilar para a placa. A camada de interoperação ainda
+não foi corrida com uma placa ligada, e `README.md` §Limites diz qual é
+o caso que ela fecha.
+
+## Os seis ficheiros de `test/`, e porque é que um deles é o `main`
+
+`test/` é uma suite só, e não seis. O PlatformIO compila todos os
+`.cpp` de um directório de `test/` para um executável, e com um `main`
+em cada ficheiro o linkador dá «definição múltipla de `main»» — uma
+mensagem que não aponta para a causa.
+
+A solução é `test/test_main.cpp`, que tem o `main` e chama a função de
+cada ficheiro. E `test_build_src = true` no ambiente de host, que sem
+ele dá dezenas de «referência não definida» — outra mensagem que não
+aponta para a causa. As duas coisas estão escritas em `platformio.ini`.
 
 ## Host
 
@@ -25,10 +42,13 @@ quem não tem hardware. Uma placa comprada em qualquer loja de
 electrónica é uma barreira baixa, mas não é zero — e a barreira mais
 alta nunca é a placa, é a de não saber se o que se alterou funciona.
 
-Os vectores usados são os mesmos que o OnyxChat partilha em
-`tests/vectors/`. Não são copiados para aqui: são buscados durante o
-teste. Copiar seria criar duas fontes de verdade para os mesmos
-números, e as duas divergiriam em silêncio até alguém notar.
+Os vectores do OnyxChat (`tests/vectors/`) **não são consumidos
+ainda**. O que está feito é a derivação da mailbox verificada
+byte a byte quanto à estrutura, e o SHA-256 em si verificado no alvo.
+
+Dizer o que está feito é mais útil do que dizer o que se pretende
+fazer: um plano de testes que se apresenta como cumprido é a forma mais
+barata de um projecto não saber o que sabe.
 
 O que a camada de host **não** apanha, e é preciso dizer:
 
@@ -116,6 +136,27 @@ ligação e desistir; é esse o teste que vale a pena correr.
   para os testes, e não há caminho de código que só o teste use. Um
   código que só existe nos testes não está a ser testado — está a ser
   escrito duas vezes.
+
+## O que a camada de host **não** apanha
+
+Escrito antes de `docs/ameacas.md` §O que este documento não cobre,
+porque aqui a lista é mais curta e a razão é mais específica.
+
+**`derivar_mailbox` não é testada em host.** Precisa de mbedTLS, e o
+mbedTLS não está no caminho de _include_ de um compilador de estação
+de trabalho. O guard `ONYX_HASH_VIA_MBEDTLS` em `mailbox.h` é o que a
+exclui, e o que fica coberto é a parte que um programador estraga sem
+dar por isso: os treze bytes do domínio e a ordem da concatenação.
+`test_mailbox.cpp` testa os dois.
+
+O `static_assert` desse ficheiro encontrou o número do domínio
+errado — estava em 14 e `ONYX/RELAY/v1` tem treze bytes. É o tipo de
+erro que um teste escrito à mão com o mesmo número errado não apanha.
+
+**`rede.cpp` e `main.cpp` não são compiladas em host.** Falam com o
+Arduino e com o lwIP. É uma consequência, não uma escolha.
+
+**Excesso de heap e tempo de resposta** — ver §Host.
 
 ## O que não é testado, e porque está aqui
 

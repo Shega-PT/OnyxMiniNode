@@ -29,7 +29,7 @@ mailbox = SHA-256("ONYX/RELAY/v1" ‖ publica)
 ```
 
 onde `publica` são os 32 bytes da chave pública Ed25519 do
-destinatário, e o prefixo tem exactamente 14 bytes. A concatenação é
+destinatário, e o prefixo tem exactamente 13 bytes. A concatenação é
 crua: não há separador, nem comprimento, nem codificação. O mesmo
 hash que o Python calcula com `hashlib.sha256` e que o Rust calcula
 com `sha2`, aqui calcula-se com o acelerador de hardware do ESP32.
