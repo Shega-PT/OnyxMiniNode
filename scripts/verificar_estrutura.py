@@ -79,10 +79,19 @@ IGNORADOS = {".git", ".pio", ".vscode", ".idea", "__pycache__"}
 
 #: `├─ src/mailbox.cpp`, `│   └─ frame.h`, `   ├─ x.cpp`.
 #:
-#: O grupo 1 é o prefixo vertical (`│   `) e o grupo 2 é o marcador
-#: (`├─ ` ou `└─ `). A profundidade de uma linha é o comprimento
-#: total dos dois, medido em colunas de indentação.
-_MARCADOR = re.compile(r"^([│ ]*?)(?:├─|└─) ")
+#: O grupo 1 é o **prefixo vertical** — as colunas `│` e espaços que
+#: vêm antes do gancho. A profundidade de uma linha é o comprimento
+#: desse prefixo, medido em unidades de indentação.
+#:
+#: O gancho (`├─` ou `└─`) **não** entra na medição, e essa é a parte
+#: que dá a resposta certa na errada com muita facilidade. Contando-o,
+#: uma linha de primeiro nível deixa de medir zero e passa a medir o
+#: comprimento do gancho — o que empurra todas as profundidades um
+#: nível para dentro e faz `├─ index.md` resolver para `index.md` em
+#: vez de `docs/index.md`. Nenhum dos dois caminhos existe, a contagem
+#: de ficheiros dá zero, e o verificador não diz nada: falha em
+#: silêncio, que é a pior forma de falhar.
+_MARCADOR = re.compile(r"^([│ ]*)[├└]─\s+(.*)$")
 
 #: `# Raiz`, `# docs/ — 3 documentos`.
 #:
@@ -270,14 +279,20 @@ def afirmacoes() -> list[Afirmacao]:
             continue
 
         if linha.startswith("#"):
+            # Um cabeçalho de secção só estabelece contexto se o seu
+            # primeiro token **terminar em barra**. `# docs/ — 3
+            # documentos` estabelece `docs`; `# Raiz` não estabelece
+            # nada, porque a raiz não é um directório dentro de si
+            # própria. Confundir os dois faz toda a secção Raiz
+            # resolver para `Raiz/Cargo.toml`.
+            #
+            # A primeira linha do ficheiro — o título do projecto — não
+            # começa por `#` e é ignorada como prosa. É o
+            # comportamento certo, e é o que faz `contexto` valer
+            # `None` à entrada da secção Raiz.
             titulo = linha[1:].strip()
-            contexto = titulo.split()[0].rstrip("/") if titulo else None
-            if contexto and contexto == "onyxmininode":
-                # O nome do projecto não é um directório dentro do
-                # repositório. Tratá-lo como um prefixo faria todos os
-                # caminhos da secção seguinte levarem `onyxmininode/`
-                # à frente e nenhum ser encontrado.
-                contexto = None
+            primeiro = titulo.split()[0] if titulo else ""
+            contexto = primeiro.rstrip("/") if primeiro.endswith("/") else None
             pilha = []
             continue
 
@@ -289,7 +304,7 @@ def afirmacoes() -> list[Afirmacao]:
             # verificador nunca vê.
             continue
 
-        profundidade = (len(m.group(1)) + len(m.group(2))) // unidade
+        profundidade = len(m.group(1)) // unidade
 
         # O comentário à direita não é parte da árvore. Os nomes de
         # ficheiro que aparecem lá — `docs/protocolo.md` numa
@@ -329,7 +344,7 @@ def _unidade(linhas: list[str]) -> int:
     varios: list[int] = []
     for linha in linhas:
         if m := _MARCADOR.match(linha):
-            n = len(m.group(1)) + len(m.group(2))
+            n = len(m.group(1))
             if n:
                 varios.append(n)
     return min(varios) if varios else 1

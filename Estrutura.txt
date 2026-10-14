@@ -44,7 +44,7 @@ daquela.
     └─ workflows/           # CI
 
 
-# docs/ — 3 documentos
+# docs/ — 4 documentos
 ---------------------------------------------------------------------
 ├─ index.md                 # Índice; é o porta de entrada desta pasta
 ├─ protocolo.md             # O que o firmware faz no fio: enquadramento,
