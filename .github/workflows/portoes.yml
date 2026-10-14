@@ -71,7 +71,7 @@ jobs:
           printf 'ficheiros visíveis fora do índice: %s\n' "$visiveis"
           if [ "$visiveis" -gt 0 ]; then
             git ls-files --others --exclude-standard | head -30
-            echo '::error::Estes ficheiros existem na árvore e não estão no índice.'
+            echo '::error::Estes ficheiros estão na árvore e fora do índice.'
             exit 1
           fi
 

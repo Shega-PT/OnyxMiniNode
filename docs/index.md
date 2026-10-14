@@ -14,7 +14,8 @@ sempre a mesma: *o que é que alguém quer saber aqui?*
 
 **Vais usar isto.** `README.md` do repositório, e a partir daí
 `protocolo.md` §Limites — é a única secção capaz de te
-surpreender: diz o tamanho máximo de uma mensagem que este nó consegue transportar.
+surpreender: diz o tamanho máximo de uma mensagem que este nó
+consegue transportar.
 
 **Vais integrar com o OnyxChat.** `README.md` §Como se liga a ele, e
 `protocolo.md` §Mensagens. O cliente do OnyxChat e este firmware partilham

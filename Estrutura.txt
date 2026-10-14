@@ -63,7 +63,7 @@ daquela.
 ├─ frame.h                  # Enquadramento e validação de tamanho
 ├─ caixa.h                  # Mailboxes, pendências e prazo de validade
 ├─ limites_taxa.h           # Janela deslizante de ENVIAR por ligação
-├─ sessao.h                 # SUBSCREVER / ENVIAR / FECHO, OK / CAIXA / ERRO
+├─ sessao.h                 # SUBSCREVER, ENVIAR, FECHO, OK, CAIXA, ERRO
 └─ rede.h                   # Ponto de acesso, estação, e o socket TCP
 
 

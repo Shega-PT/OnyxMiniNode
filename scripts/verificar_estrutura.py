@@ -83,8 +83,8 @@ IGNORADOS = {".git", ".pio", ".vscode", ".idea", "__pycache__"}
 #: vêm antes do gancho. A profundidade de uma linha é o comprimento
 #: desse prefixo, medido em unidades de indentação.
 #:
-#: O gancho (`├─` ou `└─`) **não** entra na medição, e essa é a parte
-#: que dá a resposta certa na errada com muita facilidade. Contando-o,
+#: O gancho (`├─` ou `└─`) **não** entra na medição, e essa é a
+#: parte que dá a resposta certa na errada com muita facilidade. Contando-o,
 #: uma linha de primeiro nível deixa de medir zero e passa a medir o
 #: comprimento do gancho — o que empurra todas as profundidades um
 #: nível para dentro e faz `├─ index.md` resolver para `index.md` em
@@ -269,7 +269,8 @@ def afirmacoes() -> list[Afirmacao]:
         """Fecha um nome com o directório a que pertence."""
         if profundidade == 0:
             return nome if contexto is None else f"{contexto}/{nome}"
-        base = pilha[profundidade - 1] if profundidade - 1 < len(pilha) else None
+        base = (pilha[profundidade - 1]
+                if profundidade - 1 < len(pilha) else None)
         if base is None:
             return nome
         return nome if "/" in nome else f"{base}/{nome}"
